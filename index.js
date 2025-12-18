@@ -5,6 +5,10 @@ import certificateRouter from "./routes/certificateRoutes.js";
 import trainTicketRouter from "./routes/trainTicketRoutes.js"
 import flightTicketRouter from "./routes/flightTicketRoutes.js"
 import verificationRouter from "./routes/verificationRoutes.js";
+import emailRoutes from "./routes/emailRoutes.js";
+
+
+
 
 dotenv.config();
 
@@ -23,6 +27,7 @@ app.use("/api/certificates", certificateRouter)
 app.use("/api/trainTickets", trainTicketRouter)
 app.use("/api/flightTickets", flightTicketRouter)
 app.use("/verify", verificationRouter);
+app.use("/api/email", emailRoutes);
 
 
 

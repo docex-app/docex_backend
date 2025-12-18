@@ -221,6 +221,28 @@ const downloadCertificate = async (req, res) => {
   }
 };
 
+
+//EMAIL CERTIFICATE
+const sendCertificateEmail = async (email, pdfBuffer) => {
+  await transporter.sendMail({
+    from: `"Docex Certificates" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Your Certificate is Ready 🎓",
+    html: `
+      <p>Your certificate is attached.</p>
+      <p>You can also verify it using the QR code.</p>
+    `,
+    attachments: [
+      {
+        filename: "certificate.pdf",
+        content: pdfBuffer,
+        contentType: "application/pdf"
+      }
+    ]
+  });
+};
+
+
 /* ======================================================
    EXPORTS
 ====================================================== */
@@ -230,5 +252,6 @@ export {
   updateCertificate,
   deleteCertificate,
   previewCertificate,
-  downloadCertificate
+  downloadCertificate,
+  sendCertificateEmail
 };
