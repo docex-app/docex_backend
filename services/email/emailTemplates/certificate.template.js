@@ -14,6 +14,7 @@ export const certificateEmailTemplate = ({
       font-family: Arial, Helvetica, sans-serif;
       background-color: #f4f6f8;
       padding: 20px;
+      
     }
     .container {
       max-width: 600px;

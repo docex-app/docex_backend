@@ -1,4 +1,5 @@
 import express from "express"
+import cors from "cors";
 import dotenv from "dotenv"
 import connectDB from "./config/db.js";
 import certificateRouter from "./routes/certificateRoutes.js";
@@ -18,6 +19,14 @@ app.use(express.json());
 const PORT = 8000;
 
 connectDB();
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+  })
+);
 
 app.get("/", (req,res)=>{
     res.send("Docex server is running...")

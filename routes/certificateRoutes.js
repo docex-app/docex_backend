@@ -7,8 +7,9 @@ router.get("/", getCertificates)
 router.post("/", createCertificate)
 router.put("/:id", updateCertificate)
 router.delete("/:id", deleteCertificate)
-router.get("/:id/preview", previewCertificate);
+// router.get("/:id/preview", previewCertificate);
 router.get("/:id/download", downloadCertificate);
+router.post("/preview", previewCertificate);   // PREVIEW ONLY
 
 
 

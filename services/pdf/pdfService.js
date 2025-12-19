@@ -8,7 +8,9 @@ const generatePDF = async (html, fileName = "document.pdf") => {
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
 
-  const pdfBuffer = await page.pdf({ format: "A4" });
+  const pdfBuffer = await page.pdf({ 
+    format: "A4",
+  });
 
   await browser.close();
 

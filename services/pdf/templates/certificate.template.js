@@ -17,6 +17,7 @@ const certificateTemplate = ({
       font-family: "Georgia", serif;
       background: #f4f4f4;
       padding: 40px;
+      color: #000;
     }
 
     .certificate {

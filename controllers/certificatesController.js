@@ -135,28 +135,62 @@ const deleteCertificate = async (req, res) => {
 /* ======================================================
    PREVIEW CERTIFICATE (HTML)
 ====================================================== */
+// const previewCertificate = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const certificate = await Certificate.findById(id);
+//     if (!certificate) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Certificate not found"
+//       });
+//     }
+
+//     const verifyUrl = `${process.env.BASE_URL}/verify/certificate/${certificate.verificationId}`;
+//     const qrBuffer = await generateQRBuffer(verifyUrl);
+//     const qrCodeBase64 = qrBuffer.toString("base64");
+
+//     const html = certificateTemplate({
+//       name: certificate.name,
+//       instituteName: certificate.instituteName,
+//       courseName: certificate.courseName,
+//       grade: certificate.grade,
+//       issuedDate: certificate.createdAt.toDateString(),
+//       qrCodeBase64
+//     });
+
+//     res.setHeader("Content-Type", "text/html");
+//     res.send(html);
+//   } catch (err) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Certificate preview failed",
+//       error: err.message
+//     });
+//   }
+// };
+
 const previewCertificate = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { name, instituteName, courseName, grade } = req.body;
 
-    const certificate = await Certificate.findById(id);
-    if (!certificate) {
-      return res.status(404).json({
-        success: false,
-        message: "Certificate not found"
-      });
+    if (!name || !instituteName || !courseName || !grade) {
+      return res.status(400).json({ message: "Missing fields" });
     }
 
-    const verifyUrl = `${process.env.BASE_URL}/verify/certificate/${certificate.verificationId}`;
+    // TEMP verification URL (NO DB)
+    const verifyUrl = "https://docex.app/verify/preview";
+
     const qrBuffer = await generateQRBuffer(verifyUrl);
     const qrCodeBase64 = qrBuffer.toString("base64");
 
     const html = certificateTemplate({
-      name: certificate.name,
-      instituteName: certificate.instituteName,
-      courseName: certificate.courseName,
-      grade: certificate.grade,
-      issuedDate: certificate.createdAt.toDateString(),
+      name,
+      instituteName,
+      courseName,
+      grade,
+      issuedDate: new Date().toDateString(),
       qrCodeBase64
     });
 
@@ -164,12 +198,12 @@ const previewCertificate = async (req, res) => {
     res.send(html);
   } catch (err) {
     res.status(500).json({
-      success: false,
-      message: "Certificate preview failed",
+      message: "Preview failed",
       error: err.message
     });
   }
 };
+
 
 /* ======================================================
    DOWNLOAD CERTIFICATE (PDF)
@@ -203,13 +237,22 @@ const downloadCertificate = async (req, res) => {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
 
-    const pdfBuffer = await page.pdf({ format: "A4" });
+    const pdfBuffer = await page.pdf({ 
+      format: "A4",
+      landscape: true,
+      printBackground: true
+   });
     await browser.close();
 
-    res.set({
-      "Content-Type": "application/pdf",
-      "Content-Disposition": "attachment; filename=certificate.pdf"
-    });
+    const safeName = certificate.name.replace(/\s+/g, "_");
+    const fileName = `certificate_${safeName}_${certificate.verificationId}.pdf`;
+
+
+  res.set({
+  "Content-Type": "application/pdf",
+  "Content-Disposition": `attachment; filename=${fileName}`
+  });
+
 
     res.send(pdfBuffer);
   } catch (err) {
