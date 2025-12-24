@@ -1,4 +1,6 @@
 import FlightTicket from "../model/flightTicketModel.js";
+import flightTicketTemplate from "../services/pdf/templates/flightTicket.template.js";
+import generatePDF from "../services/pdf/pdfService.js";
 
 const getFlightTickets = async (req,res)=>{
     try{
@@ -30,7 +32,7 @@ const getFlightTickets = async (req,res)=>{
 const createFlightTicket = async (req,res)=>{
     try{
         const {paxName,numOfPax,farePerPax,travelDate,pnr,sourceAirport,destAirport,flightNumber,seatNumber} = req.body;
-         if (!paxName || !numOfPax || !farePerPax || !travelDate || !pnr || !sourceAirport || !destAirport || !flightNumber || !seatNumber) {
+         if (!paxName || !numOfPax || !farePerPax || !travelDate || !pnr || !sourceAirport || !destAirport || !flightNumber) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
@@ -47,6 +49,15 @@ const createFlightTicket = async (req,res)=>{
         })
 
     }catch(err){
+
+        console.error("Create flight ticket error:", err);
+
+  if (err.code === 11000) {
+    return res.status(400).json({
+      success: false,
+      message: "PNR already exists. Please use a unique PNR."
+    });
+  }
         res.status(500).json({
             success : false,
             message : "Internal Server Error",
@@ -118,4 +129,92 @@ const deleteFlightTicket = async (req,res)=>{
     }
 }
 
-export {getFlightTickets,createFlightTicket,updateFlightTicket,deleteFlightTicket}
+//PREVIEW FLIGHT TICKETS
+
+const previewFlightTicket = async (req,res)=>{
+    try{
+        const {paxName,numOfPax,farePerPax,travelDate,pnr,sourceAirport,destAirport,flightNumber,seatNumber} = req.body;
+
+       
+        const verifyURL = "http://localhost:8000/verify/preview";
+
+        const html = flightTicketTemplate({
+            paxName,
+            numOfPax,
+            farePerPax,
+            pnr,
+            travelDate,
+            sourceAirport,
+            destAirport,
+            flightNumber,
+            seatNumber
+        })
+
+        res.setHeader("Content-type", "text/html");
+        return res.send(html);
+
+
+
+
+    }catch(err){
+        res.status(500).json({
+            success : false,
+            message : "Internal Server Error",
+            Error : err.message
+        })
+    }
+}
+
+
+const downloadFlightTicket = async (req,res)=>{
+    try{
+
+        const {id} = req.params;
+        const flightTicket = await FlightTicket.findById(id);
+        if(!flightTicket){
+            return res.status(404).json({
+            success : false,
+            message: "Flight ticket not found"
+        })
+    }
+
+    //will implement verify later
+        //const verifyURL = "http://localhost:8000/verify/preview";
+
+        const html = flightTicketTemplate({
+            paxName : flightTicket.paxName,
+        
+            numOfPax : flightTicket.numOfPax,
+            farePerPax : flightTicket.farePerPax,
+            pnr : flightTicket.pnr,
+            travelDate : flightTicket.travelDate
+        })
+
+        const pdfBuffer = await generatePDF(html);
+
+        const safeName = flightTicket.paxName.replace(/\s+/g, "_");
+        const fileName = `flightTicket_${safeName}.pdf`;
+
+        res.writeHead(200,{
+            "Content-type" : "application/pdf",
+            "Content-Disposition": `attachment; filename=${fileName}`,
+            "Content-Length": pdfBuffer.length
+        })
+
+       return res.end(pdfBuffer)
+
+
+
+    }catch(err){
+        console.error("Download error:", err);
+         if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+        error: err.message
+      });
+    }
+    }
+}
+
+export {getFlightTickets,createFlightTicket,updateFlightTicket,deleteFlightTicket,previewFlightTicket,downloadFlightTicket}

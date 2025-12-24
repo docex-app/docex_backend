@@ -16,13 +16,14 @@ dotenv.config();
 
 const app = express()
 app.use(express.json());
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
+
 
 connectDB();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   })
@@ -35,7 +36,7 @@ app.get("/", (req,res)=>{
 app.use("/api/certificates", certificateRouter)
 app.use("/api/trainTickets", trainTicketRouter)
 app.use("/api/flightTickets", flightTicketRouter)
-app.use("/verify", verificationRouter);
+app.use("/api/verify", verificationRouter);
 app.use("/api/email", emailRoutes);
 
 

@@ -1,15 +1,23 @@
 import express from "express";
 const router = express.Router()
 
-import { getTrainTickets,createTrainTicket,updateTrainTicket,deleteTrainTicket,downloadTrainTicket,previewTrainTicket } from "../controllers/trainTicketController.js";
+import { getTrainTickets,createTrainTicket,updateTrainTicket,deleteTrainTicket,downloadTrainTicket,previewTrainTicket} from "../controllers/trainTicketController.js";
 
 
 router.get("/", getTrainTickets)
 router.post("/", createTrainTicket)
 router.put("/:id", updateTrainTicket)
 router.delete("/:id", deleteTrainTicket)
-router.post("/download", downloadTrainTicket)
+//router.post("/download", downloadTrainTicket)
+//router.post("/preview", previewTrainTicket);
+// PREVIEW
 router.post("/preview", previewTrainTicket);
+
+// DOWNLOAD
+router.get("/:id/download", downloadTrainTicket);
+
+// EMAIL
+
 
 
 export default router;
