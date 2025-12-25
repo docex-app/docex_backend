@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 import baseTicketFields from "./baseTicketFieldModel.js";
 
 const TrainTicketSchema = new mongoose.Schema({
+
+    user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
    ...baseTicketFields,
     sourceStation:{
         type:String,
@@ -13,10 +19,13 @@ const TrainTicketSchema = new mongoose.Schema({
     },
     trainNum:{
         type : Number,
-        require : true,
+        required : true,
     },
+    pdfPath:{
+        type : String
+    }
     
-}, { timestamps: true }
+}, { timestamps: true, versionKey:false }
 )
 
 const TrainTicket = mongoose.model("TrainTicket", TrainTicketSchema)

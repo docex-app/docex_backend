@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 const CertificateSchema = new mongoose.Schema({
+     user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     name :{
         type : String,
         required : true
@@ -23,11 +28,10 @@ const CertificateSchema = new mongoose.Schema({
   index: true,
   required: true
 },
-    createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-})
+pdfPath:{
+    type: String
+}
+}, {timestamps:true,versionKey: false})
 
 const Certificate = mongoose.model("Certificate", CertificateSchema)
 

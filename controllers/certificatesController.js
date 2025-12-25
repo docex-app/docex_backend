@@ -12,8 +12,9 @@ import certificateTemplate from "../services/pdf/templates/certificate.template.
 ====================================================== */
 const getCertificates = async (req, res) => {
   try {
-    const certificates = await Certificate.find();
-
+    const certificates = await Certificate.find({
+      user: req.user.id 
+    }).sort({ createdAt: -1 });
     if (!certificates || certificates.length === 0) {
       return res.status(404).json({
         success: false,
@@ -49,6 +50,7 @@ const createCertificate = async (req, res) => {
     }
 
     const certificate = await Certificate.create({
+      user: req.user.id,
       name,
       instituteName,
       courseName,
@@ -60,6 +62,9 @@ const createCertificate = async (req, res) => {
       success: true,
       certificate
     });
+
+    
+
   } catch (err) {
     res.status(500).json({
       success: false,

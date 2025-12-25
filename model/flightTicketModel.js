@@ -1,28 +1,45 @@
 import mongoose from "mongoose";
 import baseTicketFields from "./baseTicketFieldModel.js";
 
-const FlightTicketSchema = new mongoose.Schema({
-   ...baseTicketFields,
-     sourceAirport: 
-     { 
-        type: String, 
-        required: true 
+const FlightTicketSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    destAirport: 
-    {   type: String, 
-        required: true 
+
+    // shared fields
+    ...baseTicketFields,
+
+    sourceAirport: {
+      type: String,
+      required: true,
     },
-    flightNumber: 
-    { type: String, 
-     required: true 
+
+    destAirport: {
+      type: String,
+      required: true,
     },
-    seatNumber: String
 
-}, 
-{ timestamps: true , 
- versionKey: false }
-)
+    flightNumber: {
+      type: String,
+      required: true,
+    },
 
-const FlightTicket = mongoose.model("FlightTicket", FlightTicketSchema)
+    seatNumber: {
+      type: String,
+    },
 
+    pdfPath: {
+      type: String,
+    },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  }
+);
+
+const FlightTicket = mongoose.model("FlightTicket", FlightTicketSchema);
 export default FlightTicket;
