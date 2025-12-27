@@ -22,6 +22,10 @@ const CertificateSchema = new mongoose.Schema({
         type : String,
         required : true
     },
+    email: {
+  type: String,
+  required: true,
+},
    verificationId: {
   type: String,
   unique: true,

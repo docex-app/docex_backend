@@ -16,12 +16,12 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      select: false, // 🔐 IMPORTANT
+      select: false,
     },
 
     avatar: {
       type: String,
-      default: "",
+      default: "", // empty = show default avatar
     },
 
     accountType: {
@@ -39,41 +39,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    resetPasswordToken: {
-  type: String,
-},
 
-resetPasswordExpire: {
-  type: Date,
-},
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
   { timestamps: true, versionKey: false }
 );
 
 const User = mongoose.model("User", userSchema);
 export default User;
-
-
-// import mongoose from "mongoose";
-
-// const userSchema = new mongoose.Schema(
-//   {
-//     name: {
-//       type: String,
-//       required: true,
-//     },
-//     email: {
-//       type: String,
-//       required: true,
-//       unique: true,
-//     },
-//     password: {
-//       type: String,
-//       required: true,
-//     },
-//   },
-//   { timestamps: true, versionKey:false }
-// );
-
-// const User = mongoose.model("User", userSchema);
-// export default User;

@@ -1,52 +1,32 @@
 import jwt from "jsonwebtoken";
 import User from "../model/User.js";
 
-// const authMiddleware = async (req, res, next) => {
-//   try {
-//     const authHeader = req.headers.authorization;
-
-//     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//       return res.status(401).json({ message: "No token provided" });
-//     }
-
-//     const token = authHeader.split(" ")[1];
-
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-//     // 🔑 THIS MUST MATCH LOGIN PAYLOAD
-//     const user = await User.findById(decoded.id).select("-password");
-
-//     if (!user) {
-//       return res.status(401).json({ message: "User not found" });
-//     }
-
-//     req.user = user;
-//     next();
-//   } catch (err) {
-//     console.error("AUTH ERROR:", err.message);
-//     return res.status(401).json({ message: "Invalid or expired token" });
-//   }
-// };
-
-
 const authMiddleware = async (req, res, next) => {
   try {
- //   console.log("AUTH HEADER:", req.headers.authorization);
+    // [1] Try to get token from header (normal APIs)
+    let token = null;
 
-    const authHeader = req.headers.authorization;
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer ")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // [2️] Fallback: allow token from query (for downloads)
+    if (!token && req.query.token) {
+      token = req.query.token;
+    }
+
+    if (!token) {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    const token = authHeader.split(" ")[1];
-   // console.log("TOKEN RECEIVED:", token);
-
+    // [3️] Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-   // console.log("DECODED TOKEN:", decoded);
 
+    // [4] Load user
     const user = await User.findById(decoded.id).select("-password");
-   // console.log("USER FOUND:", user?._id);
 
     if (!user) {
       return res.status(401).json({ message: "User not found" });
@@ -62,32 +42,3 @@ const authMiddleware = async (req, res, next) => {
 
 export default authMiddleware;
 
-
-// import jwt from "jsonwebtoken";
-// import User from "../model/User.js";
-
-// const authMiddleware = async (req, res, next) => {
-//   try {
-//     const header = req.headers.authorization;
-
-//     if (!header || !header.startsWith("Bearer ")) {
-//       return res.status(401).json({ message: "No token provided" });
-//     }
-
-//     const token = header.split(" ")[1];
-
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-//     const user = await User.findById(decoded.userId).select("-password");
-//     if (!user) {
-//       return res.status(401).json({ message: "User not found" });
-//     }
-
-//     req.user = user; // 🔥 THIS IS THE MAGIC
-//     next();
-//   } catch (err) {
-//     res.status(401).json({ message: "Invalid token" });
-//   }
-// };
-
-// export default authMiddleware;

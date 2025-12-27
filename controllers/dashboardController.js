@@ -1,6 +1,7 @@
 import Certificate from "../model/certificatesModel.js";
 import TrainTicket from "../model/trainTicketModel.js";
 import FlightTicket from "../model/flightTicketModel.js";
+import Invoice from "../model/invoiceModel.js";
 
 /* ======================================================
    DASHBOARD ANALYTICS
@@ -10,20 +11,25 @@ const getDashboardAnalytics = async (req, res) => {
     const userId = req.user.id;
 
     /* =========================
-       FETCH COUNTS
+       COUNTS (IMPORTANT FIX)
     ========================== */
     const [
       certificateCount,
       trainTicketCount,
       flightTicketCount,
+      invoiceCount,
     ] = await Promise.all([
-      Certificate.countDocuments({ user: userId }),
-      TrainTicket.countDocuments({ user: userId }),
-      FlightTicket.countDocuments({ user: userId }),
+      Certificate.countDocuments({ user: userId }),     // ✅ FIX
+      TrainTicket.countDocuments({ user: userId }),     // ✅ FIX
+      FlightTicket.countDocuments({ user: userId }),    // ✅ FIX
+      Invoice.countDocuments({ userId }),               // invoices use userId
     ]);
 
     const totalDocuments =
-      certificateCount + trainTicketCount + flightTicketCount;
+      certificateCount +
+      trainTicketCount +
+      flightTicketCount +
+      invoiceCount;
 
     /* =========================
        GENERATED TODAY
@@ -31,7 +37,12 @@ const getDashboardAnalytics = async (req, res) => {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    const generatedToday = await Promise.all([
+    const [
+      certificatesToday,
+      trainTicketsToday,
+      flightTicketsToday,
+      invoicesToday,
+    ] = await Promise.all([
       Certificate.countDocuments({
         user: userId,
         createdAt: { $gte: startOfToday },
@@ -44,47 +55,79 @@ const getDashboardAnalytics = async (req, res) => {
         user: userId,
         createdAt: { $gte: startOfToday },
       }),
+      Invoice.countDocuments({
+        userId,
+        createdAt: { $gte: startOfToday },
+      }),
     ]);
 
     const totalGeneratedToday =
-      generatedToday[0] + generatedToday[1] + generatedToday[2];
+      certificatesToday +
+      trainTicketsToday +
+      flightTicketsToday +
+      invoicesToday;
 
     /* =========================
-       RECENT ACTIVITY (LAST 5)
+       TOTAL REVENUE
     ========================== */
-    const recentCertificates = await Certificate.find({ user: userId })
-      .select("name createdAt")
-      .sort({ createdAt: -1 })
-      .limit(5);
+    const revenueAgg = await Invoice.aggregate([
+      { $match: { userId } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+    ]);
 
-    const recentTrainTickets = await TrainTicket.find({ user: userId })
-      .select("paxName createdAt")
-      .sort({ createdAt: -1 })
-      .limit(5);
+    const totalRevenue = revenueAgg[0]?.total || 0;
 
-    const recentFlightTickets = await FlightTicket.find({ user: userId })
-      .select("paxName createdAt")
-      .sort({ createdAt: -1 })
-      .limit(5);
+    /* =========================
+       RECENT ACTIVITY
+    ========================== */
+    const [
+      recentCertificates,
+      recentTrainTickets,
+      recentFlightTickets,
+      recentInvoices,
+    ] = await Promise.all([
+      Certificate.find({ user: userId })
+        .select("name createdAt")
+        .sort({ createdAt: -1 })
+        .limit(5),
+
+      TrainTicket.find({ user: userId })
+        .select("paxName createdAt")
+        .sort({ createdAt: -1 })
+        .limit(5),
+
+      FlightTicket.find({ user: userId })
+        .select("paxName createdAt")
+        .sort({ createdAt: -1 })
+        .limit(5),
+
+      Invoice.find({ userId })
+        .select("invoiceNumber client totalAmount createdAt")
+        .sort({ createdAt: -1 })
+        .limit(5),
+    ]);
 
     const recentActivity = [
       ...recentCertificates.map((c) => ({
-        type: "Certificate",
-        name: c.name,
+        type: "certificate",
+        title: c.name,
         createdAt: c.createdAt,
-        status: "completed",
       })),
       ...recentTrainTickets.map((t) => ({
-        type: "Train Ticket",
-        name: `Train Ticket - ${t.paxName}`,
+        type: "trainTicket",
+        title: `Train Ticket - ${t.paxName}`,
         createdAt: t.createdAt,
-        status: "completed",
       })),
       ...recentFlightTickets.map((f) => ({
-        type: "Flight Ticket",
-        name: `Flight Ticket - ${f.paxName}`,
+        type: "flightTicket",
+        title: `Flight Ticket - ${f.paxName}`,
         createdAt: f.createdAt,
-        status: "completed",
+      })),
+      ...recentInvoices.map((i) => ({
+        type: "invoice",
+        title: `Invoice #${i.invoiceNumber} - ${i.client?.name || "Client"}`,
+        createdAt: i.createdAt,
+        amount: i.totalAmount,
       })),
     ]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -95,9 +138,11 @@ const getDashboardAnalytics = async (req, res) => {
       analytics: {
         totalDocuments,
         generatedToday: totalGeneratedToday,
-        processing: 0, // for now
+        processing: 0,
+        revenue: totalRevenue,
         counts: {
           certificates: certificateCount,
+          invoices: invoiceCount,
           travel: trainTicketCount + flightTicketCount,
         },
         recentActivity,
@@ -113,3 +158,5 @@ const getDashboardAnalytics = async (req, res) => {
 };
 
 export { getDashboardAnalytics };
+
+

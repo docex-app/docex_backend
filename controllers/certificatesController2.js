@@ -29,36 +29,6 @@ const getCertificates = async (req,res)=>{
     }
 }
 
-//CREATE
-
-// const createCertificate = async (req,res)=>{
-//     try{
-//         const {name,instituteName,courseName,grade} = req.body;
-//          if (!name || !instituteName || !courseName || !grade) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: "All fields are required"
-//             });
-//         }
-//         const newCertificate = new Certificate({name,instituteName,courseName,grade});
-//         await newCertificate.save();
-
-
-//         res.status(201).json({
-//             success : true,
-//             message : "Certificate Created Successfully",
-//             certificate : newCertificate
-//         })
-
-//     }catch(err){
-//         res.status(500).json({
-//             success : false,
-//             message : "Internal Server Error",
-//             error : err.message
-//         })
-//     }
-
-// }
 
 import mongoose from "mongoose";
 
@@ -181,7 +151,7 @@ const previewCertificate = async (req, res) => {
     const qrBuffer = await generateQRBuffer(verifyUrl);
     const qrCodeBase64 = qrBuffer.toString("base64");
 
-    // Build HTML using your template
+    // Build HTML using my template
     const html = certificateTemplate({
       name,
       instituteName,

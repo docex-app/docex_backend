@@ -2,7 +2,7 @@ import express from "express";
 const router = express.Router();
 import  authMiddleware from "../middlewares/authMiddleware.js"
 
-// import { createCertificate, getCertificates, updateCertificate,deleteCertificate,downloadCertificate,previewCertificate} from "../controllers/certificatesController.js";
+
 import { createCertificate,getCertificates,updateCertificate,deleteCertificate,downloadCertificate,previewCertificate } from "../controllers/certificatesController.js";
 
 router.get("/", authMiddleware,getCertificates)

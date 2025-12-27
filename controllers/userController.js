@@ -1,12 +1,13 @@
 import bcrypt from "bcryptjs";
 import User from "../model/User.js";
-
+import fs from "fs";
+import path from "path";
 /* ======================================================
    GET LOGGED-IN USER
 ====================================================== */
 const getMe = async (req, res) => {
   try {
-    // req.user is already populated by authMiddleware
+    // authMiddleware already attaches full user (without password)
     res.json({
       success: true,
       user: req.user,
@@ -17,7 +18,7 @@ const getMe = async (req, res) => {
 };
 
 /* ======================================================
-   UPDATE PROFILE
+   UPDATE PROFILE (NON-SENSITIVE FIELDS)
 ====================================================== */
 const updateProfile = async (req, res) => {
   try {
@@ -29,7 +30,7 @@ const updateProfile = async (req, res) => {
     } = req.body;
 
     const updatedUser = await User.findByIdAndUpdate(
-      req.user._id, // ✅ FIX
+      req.user._id,
       {
         name,
         accountType,
@@ -39,7 +40,10 @@ const updateProfile = async (req, res) => {
       { new: true }
     ).select("-password");
 
-    res.json({ success: true, user: updatedUser });
+    res.json({
+      success: true,
+      user: updatedUser,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -52,11 +56,19 @@ const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user._id).select("+password"); // ✅ FIX
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        message: "Old password and new password are required",
+      });
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Old password is incorrect" });
+      return res.status(400).json({
+        message: "Old password is incorrect",
+      });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
@@ -72,19 +84,60 @@ const changePassword = async (req, res) => {
 };
 
 /* ======================================================
-   UPDATE AVATAR
+   UPDATE AVATAR (CLOUDINARY + MULTER)
 ====================================================== */
 const updateAvatar = async (req, res) => {
   try {
-    const { avatar } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id, // ✅ FIX
-      { avatar },
-      { new: true }
-    ).select("-password");
+    const user = await User.findById(req.user._id);
 
-    res.json({ success: true, user: updatedUser });
+    const avatarUrl = `${req.protocol}://${req.get("host")}/uploads/avatars/${req.file.filename}`;
+
+    user.avatar = avatarUrl;
+    await user.save();
+
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+// REMOVE AVATAR
+
+const removeAvatar = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user.avatar) {
+      // avatar is a full URL → extract filename
+      const filename = user.avatar.split("/uploads/avatars/")[1];
+
+      if (filename) {
+        const filePath = path.join(
+          process.cwd(),
+          "uploads",
+          "avatars",
+          filename
+        );
+
+        // delete file if exists
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+    }
+
+    user.avatar = ""; // 👈 fallback to initials
+    await user.save();
+
+    res.json({
+      success: true,
+      user,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -95,108 +148,6 @@ export {
   updateProfile,
   changePassword,
   updateAvatar,
+  removeAvatar
 };
 
-
-// import bcrypt from "bcryptjs";
-// import User from "../model/User.js";
-
-// /* ======================================================
-//    GET LOGGED-IN USER
-// ====================================================== */
-// const getMe = async (req, res) => {
-//   try {
-//     const user = await User.findById(req.user.id).select("-password");
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     res.json({ success: true, user });
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-// /* ======================================================
-//    UPDATE PROFILE
-// ====================================================== */
-// const updateProfile = async (req, res) => {
-//   try {
-//     const {
-//       name,
-//       accountType,
-//       organizationName,
-//       businessType,
-//     } = req.body;
-
-//     const updatedUser = await User.findByIdAndUpdate(
-//       req.user.id,
-//       {
-//         name,
-//         accountType,
-//         organizationName,
-//         businessType,
-//       },
-//       { new: true }
-//     ).select("-password");
-
-//     res.json({ success: true, user: updatedUser });
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-// /* ======================================================
-//    CHANGE PASSWORD
-// ====================================================== */
-// const changePassword = async (req, res) => {
-//   try {
-//     const { oldPassword, newPassword } = req.body;
-
-//     const user = await User.findById(req.user.id).select("+password");
-
-//     const isMatch = await bcrypt.compare(oldPassword, user.password);
-//     if (!isMatch) {
-//       return res.status(400).json({ message: "Old password is incorrect" });
-//     }
-
-//     const salt = await bcrypt.genSalt(10);
-//     user.password = await bcrypt.hash(newPassword, salt);
-
-//     await user.save();
-
-//     res.json({
-//       success: true,
-//       message: "Password updated successfully",
-//     });
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-// /* ======================================================
-//    UPDATE AVATAR (URL BASED)
-// ====================================================== */
-// const updateAvatar = async (req, res) => {
-//   try {
-//     const { avatar } = req.body;
-
-//     const user = await User.findByIdAndUpdate(
-//       req.user.id,
-//       { avatar },
-//       { new: true }
-//     ).select("-password");
-
-//     res.json({ success: true, user });
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// };
-
-// export {
-//   getMe,
-//   updateProfile,
-//   changePassword,
-//   updateAvatar,
-// };

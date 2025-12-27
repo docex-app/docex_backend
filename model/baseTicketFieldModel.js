@@ -19,7 +19,11 @@ const baseTicketFields = {
     type: String,
     required: true,
     unique: true
-  }
+  },
+  passengerEmail: {
+  type: String,
+  required: true,
+}
 };
 
 export default baseTicketFields;

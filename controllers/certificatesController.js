@@ -40,7 +40,7 @@ const getCertificates = async (req, res) => {
 ====================================================== */
 const createCertificate = async (req, res) => {
   try {
-    const { name, instituteName, courseName, grade } = req.body;
+    const { name, instituteName, courseName, grade,email } = req.body;
 
     if (!name || !instituteName || !courseName || !grade) {
       return res.status(400).json({
@@ -55,6 +55,7 @@ const createCertificate = async (req, res) => {
       instituteName,
       courseName,
       grade,
+      email,
       verificationId: new mongoose.Types.ObjectId().toString()
     });
 
@@ -137,46 +138,7 @@ const deleteCertificate = async (req, res) => {
   }
 };
 
-/* ======================================================
-   PREVIEW CERTIFICATE (HTML)
-====================================================== */
-// const previewCertificate = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-
-//     const certificate = await Certificate.findById(id);
-//     if (!certificate) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Certificate not found"
-//       });
-//     }
-
-//     const verifyUrl = `${process.env.BASE_URL}/verify/certificate/${certificate.verificationId}`;
-//     const qrBuffer = await generateQRBuffer(verifyUrl);
-//     const qrCodeBase64 = qrBuffer.toString("base64");
-
-//     const html = certificateTemplate({
-//       name: certificate.name,
-//       instituteName: certificate.instituteName,
-//       courseName: certificate.courseName,
-//       grade: certificate.grade,
-//       issuedDate: certificate.createdAt.toDateString(),
-//       qrCodeBase64
-//     });
-
-//     res.setHeader("Content-Type", "text/html");
-//     res.send(html);
-//   } catch (err) {
-//     res.status(500).json({
-//       success: false,
-//       message: "Certificate preview failed",
-//       error: err.message
-//     });
-//   }
-// };
-
-const previewCertificate = async (req, res) => {
+async function previewCertificate(req, res) {
   try {
     const { name, instituteName, courseName, grade } = req.body;
 
@@ -207,7 +169,7 @@ const previewCertificate = async (req, res) => {
       error: err.message
     });
   }
-};
+}
 
 
 /* ======================================================
@@ -270,27 +232,6 @@ const downloadCertificate = async (req, res) => {
 };
 
 
-//EMAIL CERTIFICATE
-// const sendCertificateEmail = async (email, pdfBuffer) => {
-//   await transporter.sendMail({
-//     from: `"Docex Certificates" <${process.env.SMTP_USER}>`,
-//     to: email,
-//     subject: "Your Certificate is Ready 🎓",
-//     html: `
-//       <p>Your certificate is attached.</p>
-//       <p>You can also verify it using the QR code.</p>
-//     `,
-//     attachments: [
-//       {
-//         filename: "certificate.pdf",
-//         content: pdfBuffer,
-//         contentType: "application/pdf"
-//       }
-//     ]
-//   });
-// };
-
-
 /* ======================================================
    EXPORTS
 ====================================================== */
@@ -301,5 +242,5 @@ export {
   deleteCertificate,
   previewCertificate,
   downloadCertificate,
-  // sendCertificateEmail
+ 
 };

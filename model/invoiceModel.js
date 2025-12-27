@@ -1,122 +1,69 @@
 import mongoose from "mongoose";
 
-const InvoiceItemSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true
+const invoiceItemSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    quantity: { type: Number, required: true },
+    price: { type: Number, required: true },
+    total: { type: Number, required: true }
   },
-  description: String,
-  quantity: {
-    type: Number,
-    required: true,
-    min: 1
+  { _id: false }
+);
+
+const invoiceSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true
+    },
+
+    invoiceNumber: {
+      type: Number,
+      required: true
+    },
+
+    seller: {
+      name: String,
+      address: String,
+      email: String,
+      phone: String,
+      gst: String
+    },
+
+    client: {
+      name: String,
+      address: String,
+      email: String,
+      phone: String,
+      phone: String,
+      gst: String
+    },
+
+    items: [invoiceItemSchema],
+
+    subtotal: { type: Number, required: true },
+    taxPercent: { type: Number, default: 0 },
+    taxAmount: { type: Number, default: 0 },
+    totalAmount: { type: Number, required: true },
+
+    status: {
+      type: String,
+      enum: ["draft", "final"],
+      default: "draft"
+    },
+
+    pdfPath: {
+      type: String
+    }
   },
-  unitPrice: {
-    type: Number,
-    required: true
-  },
-  total: {
-    type: Number,
-    required: true
+  {
+    timestamps: true
   }
-}, { _id: false });
+);
 
+// Ensure invoice number is unique per user
+invoiceSchema.index({ userId: 1, invoiceNumber: 1 }, { unique: true });
 
-const InvoiceSchema = new mongoose.Schema({
-
-  // 🔐 Ownership (Auth Ready)
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
-  },
-
-  // 🧾 Invoice Identity
-  invoiceNumber: {
-    type: String,
-    required: true,
-    unique: true
-  },
-
-  status: {
-    type: String,
-    enum: ["draft", "sent", "paid", "overdue", "cancelled"],
-    default: "draft"
-  },
-
-  // 📅 Dates
-  invoiceDate: {
-    type: Date,
-    default: Date.now
-  },
-
-  dueDate: {
-    type: Date,
-    required: true
-  },
-
-  // 🏢 Seller
-  seller: {
-    name: { type: String, required: true },
-    address: String,
-    gstNumber: String
-  },
-
-  // 👤 Customer
-  customer: {
-    name: { type: String, required: true },
-    email: String,
-    address: String,
-    gstNumber: String
-  },
-
-  // 📦 Line Items
-  items: {
-    type: [InvoiceItemSchema],
-    required: true
-  },
-
-  // 💰 Pricing (calculated server-side)
-  subTotal: {
-    type: Number,
-    required: true
-  },
-
-  tax: {
-    type: Number,
-    default: 0
-  },
-
-  discount: {
-    type: Number,
-    default: 0
-  },
-
-  totalAmount: {
-    type: Number,
-    required: true
-  },
-
-  currency: {
-    type: String,
-    default: "INR"
-  },
-
-  // 📝 Extras
-  notes: String,
-  termsAndConditions: String,
-
-  // 📄 Delivery
-  pdfUrl: String,
-  emailedAt: Date,
-  paidAt: Date
-
-}, { timestamps: true });
-
-
-// 🚀 Indexes for performance
-InvoiceSchema.index({ userId: 1 });
-InvoiceSchema.index({ invoiceNumber: 1 });
-
-const Invoice = mongoose.model("Invoice", InvoiceSchema);
-export default Invoice;
+export default mongoose.model("Invoice", invoiceSchema);

@@ -140,11 +140,20 @@ const certificateTemplate = ({
           Issued on: ${issuedDate}
         </div>
       </div>
-
       <div class="qr">
+  ${
+    qrCodeBase64
+      ? `
         <img src="data:image/png;base64,${qrCodeBase64}" />
         <div class="issued-date">Scan to verify</div>
-      </div>
+      `
+      : `
+        <div class="issued-date">Verification unavailable</div>
+      `
+  }
+</div>
+
+      
     </div>
   </div>
 </body>
@@ -152,3 +161,8 @@ const certificateTemplate = ({
 `;
 
 export default certificateTemplate;
+
+// <div class="qr">
+      //   <img src="data:image/png;base64,${qrCodeBase64}" />
+      //   <div class="issued-date">Scan to verify</div>
+      // </div>
