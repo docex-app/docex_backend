@@ -28,11 +28,13 @@ dotenv.config();
 
 
 const app = express()
+app.use(cors())
 app.use(express.json());
 const PORT = process.env.PORT || 8000;
 
 
 connectDB();
+
 
 // app.use(
 //   cors({
@@ -42,28 +44,28 @@ connectDB();
 //   })
 // );
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://docexapp.netlify.app/login",
-  "https://app.docex.in"
-];
+// const allowedOrigins = [
+//   "http://localhost:5173",
+//   "https://docexapp.netlify.app/login",
+//   "https://app.docex.in"
+// ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (Postman, server-to-server)
-      if (!origin) return callback(null, true);
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       // allow requests with no origin (Postman, server-to-server)
+//       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+//       if (allowedOrigins.includes(origin)) {
+//         return callback(null, true);
+//       }
 
-      return callback(new Error("Not allowed by CORS"));
-    },
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
-  })
-);
+//       return callback(new Error("Not allowed by CORS"));
+//     },
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     credentials: true
+//   })
+// );
 
 
 app.use("/api/auth", authRoutes);
